@@ -9,10 +9,16 @@ const path = require('path');
 const PUERTO = 8080;
 require("./database.js");
 
+
 const productsRouter = require("./routes/products.router.js");
 const cartsRouter = require("./routes/cart.router.js");
 const viewsRouter = require("./routes/views.router.js");
 const userRouter = require("./routes/user.router.js");
+const usuariosRouter = require("./routes/users.router.js");
+const manejadorError = require("./middleware/error.js");
+const compression = require("express-compression");
+const generateMockProducts = require("./mocking/errors/mockingproducts.js")
+
 
 
 app.use(express.urlencoded({ extended: true }));
@@ -25,6 +31,8 @@ app.use(cors());
 app.use(passport.initialize());
 initializePassport();
 app.use(cookieParser());
+app.use("/usuarios", usuariosRouter)
+app.use(manejadorError);
 
 
 const authMiddleware = require("./middleware/authmiddleware.js");
@@ -46,4 +54,5 @@ const httpServer = app.listen(PUERTO, () => {
 
  
 const SocketManager = require("./sockets/socketmanager.js");
+const generateMockProducts = require("./mocking/errors/mockingproducts.js");
 new SocketManager(httpServer);
