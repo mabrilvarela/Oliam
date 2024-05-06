@@ -18,7 +18,8 @@ const usuariosRouter = require("./routes/users.router.js");
 const manejadorError = require("./middleware/error.js");
 const compression = require("express-compression");
 const generateMockProducts = require("./mocking/errors/mockingproducts.js")
-
+const addLogger = require("./utils/logger.js");
+const configObject = require("./config/config.js");
 
 
 app.use(express.urlencoded({ extended: true }));
@@ -31,8 +32,11 @@ app.use(cors());
 app.use(passport.initialize());
 initializePassport();
 app.use(cookieParser());
-app.use("/usuarios", usuariosRouter)
+app.use("/usuarios", usuariosRouter);
+app.use(generateMockProducts);
 app.use(manejadorError);
+app.use(addLogger);
+
 
 
 const authMiddleware = require("./middleware/authmiddleware.js");
@@ -47,6 +51,15 @@ app.use("/api/products", productsRouter);
 app.use("/api/carts", cartsRouter);
 app.use("/api/users", userRouter);
 app.use("/", viewsRouter);
+
+app.get("/loggertest", (req, res) => {
+    req.logger.error("Error");
+    req.logger.debug("Mensaje de debug");
+    req.logger.info("Mensaje de Info");
+    req.logger.warning("Mensaje de Warning");
+    console.log(configObject.node_env);
+    res.send("Test de logs");
+})
 
 const httpServer = app.listen(PUERTO, () => {
     console.log(`Servidor escuchando en el puerto ${PUERTO}`);
