@@ -17,7 +17,6 @@ const userRouter = require("./routes/user.router.js");
 const usuariosRouter = require("./routes/users.router.js");
 const manejadorError = require("./middleware/error.js");
 const compression = require("express-compression");
-const generateMockProducts = require("./mocking/errors/mockingproducts.js")
 const addLogger = require("./utils/logger.js");
 const configObject = require("./config/config.js");
 
@@ -33,7 +32,6 @@ app.use(passport.initialize());
 initializePassport();
 app.use(cookieParser());
 app.use("/usuarios", usuariosRouter);
-app.use(generateMockProducts);
 app.use(manejadorError);
 app.use(addLogger);
 
