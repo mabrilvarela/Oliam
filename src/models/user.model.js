@@ -20,7 +20,6 @@ const userSchema = mongoose.Schema({
 
     password: {
         type: String,
-        //required: true
     },
 
     age: {
@@ -33,7 +32,7 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'usuario'],
+        enum: ['admin', 'usuario', 'premium'],
         default: 'usuario'
     }
 });

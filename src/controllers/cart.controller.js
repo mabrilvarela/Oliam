@@ -5,6 +5,8 @@ const cartRepository = new CartRepository();
 const ProductRepository = require("../repositories/products.repository.js");
 const productRepository = new ProductRepository();
 const { generateUniqueCode, calcularTotal } = require("../utils/cartutils.js");
+const EmailManager = require("../services/email.js");
+const emailManager = new EmailManager();
 
 
 
@@ -37,6 +39,16 @@ class CartController {
         const productId = req.params.pid;
         const quantity = req.body.quantity || 1;
         try {
+            const producto = await productRepository.obtenerProductoPorId(productId);
+
+            if (!producto) {
+                return res.status(404).json({ message: 'Producto no encontrado' });
+            }
+
+            if (req.user.role === 'premium' && producto.owner === req.user.email) {
+                return res.status(403).json({ message: 'No puedes agregar tu propio producto al carrito.' });
+            }
+
             await cartRepository.agregarProducto(cartId, productId, quantity);
             const carritoID = (req.user.cart).toString();
 
@@ -111,29 +123,25 @@ class CartController {
     async finalizarCompra(req, res) {
         const cartId = req.params.cid;
         try {
+
             const cart = await cartRepository.obtenerProductosDeCarrito(cartId);
             const products = cart.products;
 
-            
             const productosNoDisponibles = [];
 
-            
             for (const item of products) {
                 const productId = item.product;
                 const product = await productRepository.obtenerProductoPorId(productId);
                 if (product.stock >= item.quantity) {
-                    
                     product.stock -= item.quantity;
                     await product.save();
                 } else {
-                   
                     productosNoDisponibles.push(productId);
                 }
             }
 
             const userWithCart = await UserModel.findOne({ cart: cartId });
 
-            
             const ticket = new TicketModel({
                 code: generateUniqueCode(),
                 purchase_datetime: new Date(),
@@ -142,18 +150,24 @@ class CartController {
             });
             await ticket.save();
 
-            
             cart.products = cart.products.filter(item => productosNoDisponibles.some(productId => productId.equals(item.product)));
-
-            
             await cart.save();
 
-            res.status(200).json({ productosNoDisponibles });
+
+            await emailManager.enviarCorreoCompra(userWithCart.email, userWithCart.first_name, ticket._id);
+
+
+            res.render("checkout", {
+                cliente: userWithCart.first_name,
+                email: userWithCart.email,
+                numTicket: ticket._id
+            });
         } catch (error) {
             console.error('Error al procesar la compra:', error);
             res.status(500).json({ error: 'Error interno del servidor' });
         }
     }
+
 
 }
 
